@@ -11,14 +11,16 @@
 
 int sock;
 
-
 void *receive_messages(void *arg) {
     Packet pkt;
     while (1) {
         int bytes = recv(sock, &pkt, sizeof(pkt), 0);
         if (bytes > 0) {
             printf("[Server]: %s\n", pkt.data);
+        }else{
+          ///Clear Connection with server
         }
+
     }
     return NULL;
 }
@@ -49,6 +51,9 @@ int main() {
 
     char buffer[1024];
     while (1) {
+        //1.DISPLAY UI
+        ///RECEIVE COMMANDS 
+        //SEND TO CLIENT
         fgets(buffer, sizeof(buffer), stdin); 
         Packet pkt = { MSG_TYPE_CHAT, strlen(buffer), "" };
         strcpy(pkt.data, buffer);           

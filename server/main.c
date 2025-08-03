@@ -7,11 +7,16 @@
 #include "../common/packet.h"
 
 #define SERVER_IP "127.0.0.1"
+#define MAX_CLIENTS 10
+
+int* clients[MAX_CLIENTS]={0};
+int next_client_slot = 0;
 
 void *handle_client(void *socket_desc) {
     int sock = *(int*)socket_desc;
     Packet pkt;
-    
+    ///Read Command
+    //// pass to relevant function in seperate thread
     read(sock, &pkt, 1024);
     printf("[Client]: %s\n", pkt.data);
     char buffer[30] = "Hello from server";
@@ -51,10 +56,26 @@ int main() {
         printf("Waiting for connection...\n");
         *new_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
         printf("New client connected...\n");
-
-        pthread_t client_thread;
-        pthread_create(&client_thread, NULL, handle_client, (void*)new_socket);
-        pthread_detach(client_thread); // automatically clean up thread after finishing
+        if(next_client_slot == -1){
+            printf("Client capacity reached\n");
+        }else{
+            int prev_slot = next_client_slot;
+            clients[next_client_slot] = new_socket;
+            for (size_t i = 0; i < MAX_CLIENTS; i++)
+            {
+                if (clients[i] == 0){
+                    next_client_slot = i;
+                    i = MAX_CLIENTS;
+                    break;
+                }
+            }
+            if(prev_slot == next_client_slot){
+                next_client_slot = -1;
+            }
+            pthread_t client_thread;
+            pthread_create(&client_thread, NULL, handle_client, (void*)new_socket);
+            pthread_detach(client_thread); // automatically clean up thread after finishing
+        }
     }
 
     close(server_fd);
