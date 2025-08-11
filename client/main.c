@@ -18,10 +18,15 @@ void *receive_messages(void *arg) {
         if (bytes > 0) {
             printf("[Server]: %s\n", pkt.data);
         }else{
-          ///Clear Connection with server
+            strcpy(pkt.data,"Closing");  
+            send(sock,&pkt,sizeof(pkt),0);
         }
-
     }
+    return NULL;
+}
+
+void *send_messages(void *args) {
+    int bytes = send(sock, args, sizeof(Packet), 0);
     return NULL;
 }
 
@@ -53,10 +58,12 @@ int main() {
     while (1) {
         //1.DISPLAY UI
         ///RECEIVE COMMANDS 
-        //SEND TO CLIENT
+        //SEND TO Server
         fgets(buffer, sizeof(buffer), stdin); 
         Packet pkt = { MSG_TYPE_CHAT, strlen(buffer), "" };
-        strcpy(pkt.data, buffer);           
-        send(sock, &pkt, sizeof(pkt), 0);
+        strcpy(pkt.data, buffer);   
+        pthread_t client_thread;
+        pthread_create(&client_thread, NULL, send_messages,(void*)&pkt);
+        pthread_detach(client_thread);
     }
 }
